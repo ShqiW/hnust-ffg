@@ -10,10 +10,18 @@ import PropertyDetail from './pages/PropertyDetail';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#2C3E50',
+      main: '#000000',
     },
     secondary: {
-      main: '#27AE60',
+      main: '#000000',
+    },
+    background: {
+      default: '#FFFFFF',
+      paper: '#FAFAFA',
+    },
+    text: {
+      primary: '#000000',
+      secondary: '#666666',
     },
   },
   typography: {
@@ -26,6 +34,25 @@ const theme = createTheme({
       'Arial',
       'sans-serif',
     ].join(','),
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: 0,
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          boxShadow: 'none',
+          border: '1px solid #E0E0E0',
+        },
+      },
+    },
   },
 });
 

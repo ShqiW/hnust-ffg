@@ -1,17 +1,19 @@
 :root {
-    /* Colors */
-    --primary: #2C3E50;
-    --primary-light: #34495E;
-    --secondary: #27AE60;
-    --secondary-light: #2ECC71;
-    --background: #F8F9FA;
-    --surface: #FFFFFF;
-    --text-primary: #2C3E50;
-    --text-secondary: #7F8C8D;
-    --border: #E5E7EB;
-    --error: #E74C3C;
-    --success: #27AE60;
-    --warning: #F1C40F;
+    /* Colors - 黑白极简风格 */
+    --primary: #000000;
+    --primary-light: #333333;
+    --secondary: #000000;
+    --secondary-light: #1a1a1a;
+    --background: #FFFFFF;
+    --surface: #FAFAFA;
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --border: #E0E0E0;
+    --border-light: #F0F0F0;
+    --error: #000000;
+    --success: #000000;
+    --warning: #000000;
+    --hover-bg: #F5F5F5;
 
     /* Typography */
     --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
