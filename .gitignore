@@ -8,3 +8,13 @@
 .env.production.local
 .env.development
 .env.test
+
+# Backend
+backend/media/
+backend/db.sqlite3
+__pycache__/
+*.pyc
+
+# Frontend
+node_modules/
+build/
