@@ -1,43 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
     Container,
-    Grid,
     Typography,
     Box,
     Paper,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     Button,
-    TextField,
+    Divider,
     Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
+    IconButton,
 } from '@mui/material';
 import {
-    LocationOn,
-    AttachMoney,
-    CalendarToday,
-    Home,
     CheckCircle,
-    Phone,
-    Email,
+    ArrowBack,
+    ChevronLeft,
+    ChevronRight,
+    Close,
 } from '@mui/icons-material';
 import axios from 'axios';
 
+// 设施配置
+const FACILITIES = [
+    { key: 'has_air_conditioning', label: '空调' },
+    { key: 'has_water_heater', label: '热水器' },
+    { key: 'has_washing_machine', label: '洗衣机' },
+    { key: 'has_refrigerator', label: '冰箱' },
+    { key: 'has_tv', label: '电视' },
+    { key: 'has_wifi', label: 'WiFi' },
+    { key: 'has_bed', label: '床' },
+    { key: 'has_desk', label: '书桌' },
+    { key: 'has_wardrobe', label: '衣柜' },
+];
+
 function PropertyDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [property, setProperty] = useState(null);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [contactForm, setContactForm] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        message: '',
-    });
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
 
     useEffect(() => {
         fetchProperty();
@@ -52,224 +52,424 @@ function PropertyDetail() {
         }
     };
 
-    const handleContactSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await axios.post(`http://localhost:8000/api/properties/${id}/contact/`, contactForm);
-            setOpenDialog(false);
-            setContactForm({
-                name: '',
-                email: '',
-                phone: '',
-                message: '',
-            });
-        } catch (error) {
-            console.error('Error submitting contact form:', error);
-        }
-    };
-
     if (!property) {
         return (
-            <Container>
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '60vh'
+            }}>
                 <Typography>加载中...</Typography>
-            </Container>
+            </Box>
         );
     }
 
+    // 图片轮播
+    const images = property.images || [];
+    const hasMultipleImages = images.length > 1;
+
+    const handlePrevImage = () => {
+        setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    };
+
+    const handleNextImage = () => {
+        setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    };
+
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Grid container spacing={4}>
-                {/* Property Images */}
-                <Grid item xs={12}>
+        <Box sx={{ minHeight: '100vh', backgroundColor: '#FFF', py: 6 }}>
+            <Container maxWidth="lg">
+                {/* 第一行：照片 + 价格信息 */}
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', md: 'row' },
+                    gap: 4,
+                    mb: 4,
+                    height: { md: 400 },
+                }}>
+                    {/* 左侧：照片轮播 */}
                     <Box
                         sx={{
+                            flex: { md: '0 0 58%' },
+                            width: { xs: '100%', md: '58%' },
+                            height: { xs: 300, md: 400 },
                             position: 'relative',
-                            height: 400,
                             overflow: 'hidden',
-                            borderRadius: 2,
+                            border: '1px solid #E0E0E0',
+                            backgroundColor: '#F5F5F5',
+                            flexShrink: 0,
                         }}
                     >
                         <img
-                            src={property.images[0]?.image || 'https://source.unsplash.com/random/1200x800/?apartment'}
+                            src={images[currentImageIndex]?.image || 'https://via.placeholder.com/800x400?text=暂无图片'}
                             alt={property.title}
+                            onClick={() => images.length > 0 && setLightboxOpen(true)}
                             style={{
+                                display: 'block',
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
+                                cursor: images.length > 0 ? 'pointer' : 'default',
                             }}
                         />
-                    </Box>
-                </Grid>
 
-                {/* Property Info */}
-                <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h4" gutterBottom>
-                            {property.title}
-                        </Typography>
-                        <List>
-                            <ListItem>
-                                <ListItemIcon>
-                                    <LocationOn />
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="位置"
-                                    secondary={property.location}
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <ListItemIcon>
-                                    <AttachMoney />
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="价格"
-                                    secondary={`¥${property.price}/月`}
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <ListItemIcon>
-                                    <CalendarToday />
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="可入住日期"
-                                    secondary={new Date(property.available_from).toLocaleDateString()}
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <ListItemIcon>
-                                    <Home />
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="房型"
-                                    secondary={property.room_type}
-                                />
-                            </ListItem>
-                        </List>
-
-                        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-                            房源描述
-                        </Typography>
-                        <Typography variant="body1" paragraph>
-                            {property.description}
-                        </Typography>
-
-                        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-                            设施
-                        </Typography>
-                        <Grid container spacing={2}>
-                            {property.facilities.map((facility) => (
-                                <Grid item key={facility.id}>
-                                    <Box
+                            {/* 左右切换按钮 */}
+                            {hasMultipleImages && (
+                                <>
+                                    <Button
+                                        onClick={handlePrevImage}
                                         sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            bgcolor: 'grey.100',
-                                            p: 1,
-                                            borderRadius: 1,
+                                            position: 'absolute',
+                                            left: 8,
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            minWidth: 40,
+                                            height: 40,
+                                            borderRadius: '50%',
+                                            backgroundColor: 'rgba(255,255,255,0.9)',
+                                            color: '#000',
+                                            '&:hover': { backgroundColor: '#FFF' },
                                         }}
                                     >
-                                        <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-                                        <Typography variant="body2">{facility.name}</Typography>
-                                    </Box>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </Paper>
-                </Grid>
+                                        <ChevronLeft />
+                                    </Button>
+                                    <Button
+                                        onClick={handleNextImage}
+                                        sx={{
+                                            position: 'absolute',
+                                            right: 8,
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            minWidth: 40,
+                                            height: 40,
+                                            borderRadius: '50%',
+                                            backgroundColor: 'rgba(255,255,255,0.9)',
+                                            color: '#000',
+                                            '&:hover': { backgroundColor: '#FFF' },
+                                        }}
+                                    >
+                                        <ChevronRight />
+                                    </Button>
+                                </>
+                            )}
 
-                {/* Contact Form */}
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            联系房东
-                        </Typography>
-                        <List>
-                            {property.contacts.map((contact) => (
-                                <React.Fragment key={contact.id}>
-                                    <ListItem>
-                                        <ListItemIcon>
-                                            <Phone />
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary="电话"
-                                            secondary={contact.phone}
+                            {/* 图片指示器 */}
+                            {hasMultipleImages && (
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        bottom: 16,
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        display: 'flex',
+                                        gap: 1,
+                                    }}
+                                >
+                                    {images.map((_, index) => (
+                                        <Box
+                                            key={index}
+                                            onClick={() => setCurrentImageIndex(index)}
+                                            sx={{
+                                                width: 8,
+                                                height: 8,
+                                                borderRadius: '50%',
+                                                backgroundColor: index === currentImageIndex ? '#000' : 'rgba(255,255,255,0.7)',
+                                                cursor: 'pointer',
+                                                border: '1px solid rgba(0,0,0,0.3)',
+                                            }}
                                         />
-                                    </ListItem>
-                                    <ListItem>
-                                        <ListItemIcon>
-                                            <Email />
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary="邮箱"
-                                            secondary={contact.email}
-                                        />
-                                    </ListItem>
-                                </React.Fragment>
-                            ))}
-                        </List>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => setOpenDialog(true)}
-                            sx={{ mt: 2 }}
-                        >
-                            发送消息
-                        </Button>
-                    </Paper>
-                </Grid>
-            </Grid>
+                                    ))}
+                                </Box>
+                            )}
 
-            {/* Contact Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>联系房东</DialogTitle>
-                <DialogContent>
-                    <Box component="form" onSubmit={handleContactSubmit} sx={{ mt: 2 }}>
-                        <TextField
-                            fullWidth
-                            label="姓名"
-                            value={contactForm.name}
-                            onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                            margin="normal"
-                            required
-                        />
-                        <TextField
-                            fullWidth
-                            label="邮箱"
-                            type="email"
-                            value={contactForm.email}
-                            onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                            margin="normal"
-                            required
-                        />
-                        <TextField
-                            fullWidth
-                            label="电话"
-                            value={contactForm.phone}
-                            onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                            margin="normal"
-                            required
-                        />
-                        <TextField
-                            fullWidth
-                            label="留言"
-                            multiline
-                            rows={4}
-                            value={contactForm.message}
-                            onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                            margin="normal"
-                            required
-                        />
+                            {/* 图片计数 */}
+                            {hasMultipleImages && (
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 16,
+                                        right: 16,
+                                        backgroundColor: 'rgba(0,0,0,0.6)',
+                                        color: '#FFF',
+                                        px: 1.5,
+                                        py: 0.5,
+                                        fontSize: '0.875rem',
+                                    }}
+                                >
+                                    {currentImageIndex + 1} / {images.length}
+                                </Box>
+                            )}
                     </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>取消</Button>
-                    <Button onClick={handleContactSubmit} variant="contained">
-                        发送
-                    </Button>
-                </DialogActions>
+
+                    {/* 右侧：价格、状态、按钮 */}
+                    <Paper sx={{
+                        flex: { md: '1 1 auto' },
+                        width: { xs: '100%' },
+                        height: { xs: 'auto', md: 400 },
+                        p: 4,
+                        boxShadow: 'none',
+                        border: '1px solid #E0E0E0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        boxSizing: 'border-box',
+                    }}>
+                            {/* 价格 */}
+                            <Box>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    租金
+                                </Typography>
+                                <Typography variant="h3" sx={{ fontWeight: 600, mb: 3 }}>
+                                    {property.price_display || `¥${property.price}/月`}
+                                </Typography>
+
+                                <Divider sx={{ my: 2 }} />
+
+                                {/* 出租状态 */}
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        出租状态
+                                    </Typography>
+                                    <Typography variant="h6" sx={{
+                                        fontWeight: 500,
+                                        color: property.is_available ? '#000' : '#999'
+                                    }}>
+                                        {property.rental_status_display || (property.is_available ? '可出租' : '已出租')}
+                                    </Typography>
+                                </Box>
+
+                                {/* 最早可入住时间 */}
+                                {property.available_from && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            最早可入住
+                                        </Typography>
+                                        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                                            {new Date(property.available_from).toLocaleDateString('zh-CN')}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Box>
+
+                            {/* 按钮 */}
+                            <Box sx={{ mt: 3 }}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    sx={{
+                                        mb: 2,
+                                        backgroundColor: '#000',
+                                        color: '#FFF',
+                                        borderRadius: 0,
+                                        py: 1.5,
+                                        '&:hover': {
+                                            backgroundColor: '#333',
+                                        }
+                                    }}
+                                >
+                                    咨询房源
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    fullWidth
+                                    startIcon={<ArrowBack />}
+                                    onClick={() => navigate(-1)}
+                                    sx={{
+                                        borderColor: '#000',
+                                        color: '#000',
+                                        borderRadius: 0,
+                                        py: 1.5,
+                                        '&:hover': {
+                                            borderColor: '#000',
+                                            backgroundColor: '#F5F5F5',
+                                        }
+                                    }}
+                                >
+                                    返回列表
+                                </Button>
+                            </Box>
+                    </Paper>
+                </Box>
+
+                {/* 第二行：房源描述 */}
+                {property.description && (
+                    <Paper sx={{ p: 4, boxShadow: 'none', border: '1px solid #E0E0E0', mb: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 500, mb: 2, borderBottom: '2px solid #000', pb: 1 }}>
+                            房源描述
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#666', lineHeight: 1.8 }}>
+                            {property.description}
+                        </Typography>
+                    </Paper>
+                )}
+
+                {/* 第三行：基本信息 */}
+                <Paper sx={{ p: 4, boxShadow: 'none', border: '1px solid #E0E0E0', mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 500, mb: 2, borderBottom: '2px solid #000', pb: 1 }}>
+                        基本信息
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">位置</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{property.location}</Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">房型</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                {property.room_type_display || property.room_type}
+                            </Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">面积</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{property.area}㎡</Typography>
+                        </Box>
+                        {property.floor && (
+                            <Box>
+                                <Typography variant="body2" color="text.secondary">楼层</Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>{property.floor}楼</Typography>
+                            </Box>
+                        )}
+                        {property.is_on_campus && (
+                            <Box>
+                                <Typography variant="body2" color="text.secondary">位置类型</Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>校园内</Typography>
+                            </Box>
+                        )}
+                    </Box>
+                </Paper>
+
+                {/* 第四行：配套设施 */}
+                <Paper sx={{ p: 4, boxShadow: 'none', border: '1px solid #E0E0E0' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 500, mb: 2, borderBottom: '2px solid #000', pb: 1 }}>
+                        配套设施
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                        {FACILITIES.filter(f => property[f.key]).map((facility) => (
+                            <Box
+                                key={facility.key}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <CheckCircle sx={{ mr: 1, fontSize: 18, color: '#000' }} />
+                                <Typography variant="body2">
+                                    {facility.label}
+                                </Typography>
+                            </Box>
+                        ))}
+                    </Box>
+                </Paper>
+            </Container>
+
+            {/* 图片放大 Lightbox */}
+            <Dialog
+                open={lightboxOpen}
+                onClose={() => setLightboxOpen(false)}
+                maxWidth={false}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            backgroundColor: 'transparent',
+                            boxShadow: 'none',
+                            overflow: 'visible',
+                        }
+                    }
+                }}
+                sx={{
+                    '& .MuiBackdrop-root': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                    }
+                }}
+            >
+                <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {/* 关闭按钮 */}
+                    <IconButton
+                        onClick={() => setLightboxOpen(false)}
+                        sx={{
+                            position: 'fixed',
+                            top: 20,
+                            right: 20,
+                            color: '#FFF',
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
+                        }}
+                    >
+                        <Close />
+                    </IconButton>
+
+                    {/* 左切换按钮 */}
+                    {hasMultipleImages && (
+                        <IconButton
+                            onClick={handlePrevImage}
+                            sx={{
+                                position: 'fixed',
+                                left: 20,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: '#FFF',
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                width: 50,
+                                height: 50,
+                                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
+                            }}
+                        >
+                            <ChevronLeft fontSize="large" />
+                        </IconButton>
+                    )}
+
+                    {/* 大图 */}
+                    <img
+                        src={images[currentImageIndex]?.image}
+                        alt={property.title}
+                        style={{
+                            display: 'block',
+                            maxWidth: '80vw',
+                            maxHeight: '85vh',
+                            objectFit: 'contain',
+                        }}
+                    />
+
+                    {/* 右切换按钮 */}
+                    {hasMultipleImages && (
+                        <IconButton
+                            onClick={handleNextImage}
+                            sx={{
+                                position: 'fixed',
+                                right: 20,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: '#FFF',
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                width: 50,
+                                height: 50,
+                                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
+                            }}
+                        >
+                            <ChevronRight fontSize="large" />
+                        </IconButton>
+                    )}
+
+                    {/* 图片计数 */}
+                    {hasMultipleImages && (
+                        <Typography
+                            sx={{
+                                position: 'fixed',
+                                bottom: 30,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                color: '#FFF',
+                                fontSize: '1rem',
+                            }}
+                        >
+                            {currentImageIndex + 1} / {images.length}
+                        </Typography>
+                    )}
+                </Box>
             </Dialog>
-        </Container>
+        </Box>
     );
 }
 
-export default PropertyDetail; 
+export default PropertyDetail;
