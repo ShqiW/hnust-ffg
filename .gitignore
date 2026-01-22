@@ -18,3 +18,19 @@ __pycache__/
 # Frontend
 node_modules/
 build/
+
+*.csv
+*.log
+
+# Python virtualenv
+venv/
+env/
+.venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Django
+staticfiles/
