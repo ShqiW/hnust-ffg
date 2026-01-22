@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Property, PropertyImage
+from .models import Property, PropertyImage, Inquiry
 
 
 class PropertyImageSerializer(serializers.ModelSerializer):
@@ -13,11 +13,13 @@ class PropertySerializer(serializers.ModelSerializer):
     price_display = serializers.CharField(read_only=True)
     room_type_display = serializers.CharField(source="get_room_type_display", read_only=True)
     rental_status_display = serializers.CharField(source="get_rental_status_display", read_only=True)
+    bathroom_type_display = serializers.CharField(source="get_bathroom_type_display", read_only=True)
 
     # 前端兼容字段
     campus = serializers.CharField(source="location", read_only=True)
     price = serializers.DecimalField(source="price_min", max_digits=10, decimal_places=0, read_only=True)
     is_available = serializers.SerializerMethodField()
+    has_private_bathroom = serializers.SerializerMethodField()
 
     class Meta:
         model = Property
@@ -51,9 +53,31 @@ class PropertySerializer(serializers.ModelSerializer):
             "has_bed",
             "has_desk",
             "has_wardrobe",
+            "bathroom_type",
+            "bathroom_type_display",
+            "has_private_bathroom",
             "created_at",
             "updated_at",
         ]
 
     def get_is_available(self, obj):
         return obj.rental_status == "available"
+
+    def get_has_private_bathroom(self, obj):
+        return obj.bathroom_type == "private"
+
+
+class InquirySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inquiry
+        fields = [
+            "id",
+            "name",
+            "phone",
+            "requirements",
+            "move_in_date",
+            "price_min",
+            "price_max",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
