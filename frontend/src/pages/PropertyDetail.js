@@ -1,23 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-    Container,
-    Typography,
-    Box,
-    Paper,
-    Button,
-    Divider,
-    Dialog,
-    IconButton,
-} from '@mui/material';
-import {
-    CheckCircle,
-    ArrowBack,
-    ChevronLeft,
-    ChevronRight,
-    Close,
-} from '@mui/icons-material';
+import { Container, Box, Dialog, IconButton, CircularProgress } from '@mui/material';
+import { ChevronLeft, ChevronRight, Close, ArrowBack } from '@mui/icons-material';
 import axios from 'axios';
+import API_URL from '../config';
 
 // 设施配置
 const FACILITIES = [
@@ -36,38 +22,38 @@ function PropertyDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [property, setProperty] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
 
     useEffect(() => {
         fetchProperty();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const fetchProperty = async () => {
         try {
-            const response = await axios.get(`http://localhost:8000/api/properties/${id}/`);
+            setLoading(true);
+            const response = await axios.get(`${API_URL}/api/properties/${id}/`);
             setProperty(response.data);
         } catch (error) {
             console.error('Error fetching property:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (!property) {
+    if (loading || !property) {
         return (
-            <Box sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '60vh'
-            }}>
-                <Typography>加载中...</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                <CircularProgress sx={{ color: '#000' }} size={24} thickness={2} />
             </Box>
         );
     }
 
-    // 图片轮播
     const images = property.images || [];
     const hasMultipleImages = images.length > 1;
+    const availableFacilities = FACILITIES.filter(f => property[f.key]);
 
     const handlePrevImage = () => {
         setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -78,25 +64,28 @@ function PropertyDetail() {
     };
 
     return (
-        <Box sx={{ minHeight: '100vh', backgroundColor: '#FFF', py: 6 }}>
-            <Container maxWidth="lg">
+        <Box sx={{ minHeight: '100vh', backgroundColor: '#FFF', pt: 6, pb: 12 }}>
+            <Container maxWidth="lg" sx={{ px: { xs: 3, md: 4 } }}>
                 {/* 第一行：照片 + 价格信息 */}
-                <Box sx={{
-                    display: 'flex',
-                    flexDirection: { xs: 'column', md: 'row' },
-                    gap: 4,
-                    mb: 4,
-                    height: { md: 400 },
-                }}>
+                <Box
+                    className="animate-fade-in-up"
+                    sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        gap: 4,
+                        mb: 6,
+                        height: { md: 420 },
+                        opacity: 0,
+                    }}
+                >
                     {/* 左侧：照片轮播 */}
                     <Box
                         sx={{
-                            flex: { md: '0 0 58%' },
-                            width: { xs: '100%', md: '58%' },
-                            height: { xs: 300, md: 400 },
+                            flex: { md: '0 0 60%' },
+                            width: { xs: '100%', md: '60%' },
+                            height: { xs: 280, md: 420 },
                             position: 'relative',
                             overflow: 'hidden',
-                            border: '1px solid #E0E0E0',
                             backgroundColor: '#F5F5F5',
                             flexShrink: 0,
                         }}
@@ -114,277 +103,185 @@ function PropertyDetail() {
                             }}
                         />
 
-                            {/* 左右切换按钮 */}
-                            {hasMultipleImages && (
-                                <>
-                                    <Button
-                                        onClick={handlePrevImage}
-                                        sx={{
-                                            position: 'absolute',
-                                            left: 8,
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            minWidth: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            backgroundColor: 'rgba(255,255,255,0.9)',
-                                            color: '#000',
-                                            '&:hover': { backgroundColor: '#FFF' },
-                                        }}
-                                    >
-                                        <ChevronLeft />
-                                    </Button>
-                                    <Button
-                                        onClick={handleNextImage}
-                                        sx={{
-                                            position: 'absolute',
-                                            right: 8,
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            minWidth: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            backgroundColor: 'rgba(255,255,255,0.9)',
-                                            color: '#000',
-                                            '&:hover': { backgroundColor: '#FFF' },
-                                        }}
-                                    >
-                                        <ChevronRight />
-                                    </Button>
-                                </>
-                            )}
+                        {/* 左右切换按钮 */}
+                        {hasMultipleImages && (
+                            <>
+                                <NavButton direction="left" onClick={handlePrevImage}>
+                                    <ChevronLeft sx={{ fontSize: 24 }} />
+                                </NavButton>
+                                <NavButton direction="right" onClick={handleNextImage}>
+                                    <ChevronRight sx={{ fontSize: 24 }} />
+                                </NavButton>
+                            </>
+                        )}
 
-                            {/* 图片指示器 */}
-                            {hasMultipleImages && (
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        bottom: 16,
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        display: 'flex',
-                                        gap: 1,
-                                    }}
-                                >
-                                    {images.map((_, index) => (
-                                        <Box
-                                            key={index}
-                                            onClick={() => setCurrentImageIndex(index)}
-                                            sx={{
-                                                width: 8,
-                                                height: 8,
-                                                borderRadius: '50%',
-                                                backgroundColor: index === currentImageIndex ? '#000' : 'rgba(255,255,255,0.7)',
-                                                cursor: 'pointer',
-                                                border: '1px solid rgba(0,0,0,0.3)',
-                                            }}
-                                        />
-                                    ))}
-                                </Box>
-                            )}
+                        {/* 图片指示器 */}
+                        {hasMultipleImages && (
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: 16,
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    display: 'flex',
+                                    gap: 1,
+                                }}
+                            >
+                                {images.map((_, index) => (
+                                    <Box
+                                        key={index}
+                                        onClick={() => setCurrentImageIndex(index)}
+                                        sx={{
+                                            width: 6,
+                                            height: 6,
+                                            borderRadius: '50%',
+                                            backgroundColor: index === currentImageIndex ? '#000' : 'rgba(255,255,255,0.6)',
+                                            cursor: 'pointer',
+                                            transition: 'background-color 0.2s ease',
+                                        }}
+                                    />
+                                ))}
+                            </Box>
+                        )}
 
-                            {/* 图片计数 */}
-                            {hasMultipleImages && (
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 16,
-                                        right: 16,
-                                        backgroundColor: 'rgba(0,0,0,0.6)',
-                                        color: '#FFF',
-                                        px: 1.5,
-                                        py: 0.5,
-                                        fontSize: '0.875rem',
-                                    }}
-                                >
-                                    {currentImageIndex + 1} / {images.length}
-                                </Box>
-                            )}
+                        {/* 图片计数 */}
+                        {hasMultipleImages && (
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: 16,
+                                    right: 16,
+                                    backgroundColor: 'rgba(0,0,0,0.5)',
+                                    color: '#FFF',
+                                    px: 1.5,
+                                    py: 0.5,
+                                    fontSize: '0.75rem',
+                                    letterSpacing: '0.05em',
+                                }}
+                            >
+                                {currentImageIndex + 1} / {images.length}
+                            </Box>
+                        )}
                     </Box>
 
                     {/* 右侧：价格、状态、按钮 */}
-                    <Paper sx={{
-                        flex: { md: '1 1 auto' },
-                        width: { xs: '100%' },
-                        height: { xs: 'auto', md: 400 },
-                        p: 4,
-                        boxShadow: 'none',
-                        border: '1px solid #E0E0E0',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        boxSizing: 'border-box',
-                    }}>
-                            {/* 价格 */}
+                    <Box
+                        sx={{
+                            width: { xs: '100%', md: '35%' },
+                            p: { xs: 3, md: 4 },
+                            border: '1px solid #E0E0E0',
+                        }}
+                    >
+                        {/* 价格 */}
+                        <Box sx={{ fontSize: '0.8125rem', color: '#999', letterSpacing: '0.05em', mb: 1 }}>
+                            租金
+                        </Box>
+                        <Box sx={{ fontSize: { xs: '1.75rem', md: '2rem' }, fontWeight: 300, color: '#000', mb: 4 }}>
+                            {property.price_display || `¥${property.price}/月`}
+                        </Box>
+
+                        {/* 出租状态和最早可入住 */}
+                        <Box sx={{ display: 'flex', gap: 4, mb: 4 }}>
                             <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                    租金
-                                </Typography>
-                                <Typography variant="h3" sx={{ fontWeight: 600, mb: 3 }}>
-                                    {property.price_display || `¥${property.price}/月`}
-                                </Typography>
-
-                                <Divider sx={{ my: 2 }} />
-
-                                {/* 出租状态 */}
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                        出租状态
-                                    </Typography>
-                                    <Typography variant="h6" sx={{
-                                        fontWeight: 500,
-                                        color: property.is_available ? '#000' : '#999'
-                                    }}>
-                                        {property.rental_status_display || (property.is_available ? '可出租' : '已出租')}
-                                    </Typography>
+                                <Box sx={{ fontSize: '0.8125rem', color: '#999', mb: 1 }}>出租状态</Box>
+                                <Box sx={{ fontSize: '1rem', fontWeight: 500, color: property.is_available ? '#000' : '#999' }}>
+                                    {property.rental_status_display || (property.is_available ? '可出租' : '已出租')}
                                 </Box>
-
-                                {/* 最早可入住时间 */}
-                                {property.available_from && (
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            最早可入住
-                                        </Typography>
-                                        <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                                            {new Date(property.available_from).toLocaleDateString('zh-CN')}
-                                        </Typography>
+                            </Box>
+                            {property.available_from && (
+                                <Box>
+                                    <Box sx={{ fontSize: '0.8125rem', color: '#999', mb: 1 }}>最早可入住</Box>
+                                    <Box sx={{ fontSize: '1rem', fontWeight: 500, color: '#000' }}>
+                                        {new Date(property.available_from).toLocaleDateString('zh-CN')}
                                     </Box>
-                                )}
-                            </Box>
+                                </Box>
+                            )}
+                        </Box>
 
-                            {/* 按钮 */}
-                            <Box sx={{ mt: 3 }}>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    sx={{
-                                        mb: 2,
-                                        backgroundColor: '#000',
-                                        color: '#FFF',
-                                        borderRadius: 0,
-                                        py: 1.5,
-                                        '&:hover': {
-                                            backgroundColor: '#333',
-                                        }
-                                    }}
-                                >
-                                    咨询房源
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    fullWidth
-                                    startIcon={<ArrowBack />}
-                                    onClick={() => navigate(-1)}
-                                    sx={{
-                                        borderColor: '#000',
-                                        color: '#000',
-                                        borderRadius: 0,
-                                        py: 1.5,
-                                        '&:hover': {
-                                            borderColor: '#000',
-                                            backgroundColor: '#F5F5F5',
-                                        }
-                                    }}
-                                >
-                                    返回列表
-                                </Button>
-                            </Box>
-                    </Paper>
+                        {/* 联系方式 */}
+                        <Box sx={{ mb: 4 }}>
+                            <Box sx={{ fontSize: '0.8125rem', color: '#999', mb: 1 }}>咨询房源</Box>
+                            <Box sx={{ fontSize: '1rem', fontWeight: 500, color: '#000' }}>19967268966</Box>
+                            <Box sx={{ fontSize: '0.8125rem', color: '#666' }}>电话 / 微信同号（备注租房）</Box>
+                        </Box>
+
+                        {/* 返回按钮 */}
+                        <ActionButton onClick={() => navigate(-1)}>
+                            <ArrowBack sx={{ fontSize: 18, mr: 1 }} />
+                            返回列表
+                        </ActionButton>
+                    </Box>
                 </Box>
 
-                {/* 第二行：房源描述 */}
+                {/* 房源描述 */}
                 {property.description && (
-                    <Paper sx={{ p: 4, boxShadow: 'none', border: '1px solid #E0E0E0', mb: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 500, mb: 2, borderBottom: '2px solid #000', pb: 1 }}>
-                            房源描述
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: '#666', lineHeight: 1.8 }}>
+                    <InfoSection
+                        title="房源描述"
+                        className="animate-fade-in-up delay-1"
+                    >
+                        <Box sx={{ fontSize: '0.9375rem', color: '#666', lineHeight: 2, textAlign: 'justify' }}>
                             {property.description}
-                        </Typography>
-                    </Paper>
+                        </Box>
+                    </InfoSection>
                 )}
 
-                {/* 第三行：基本信息 */}
-                <Paper sx={{ p: 4, boxShadow: 'none', border: '1px solid #E0E0E0', mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 500, mb: 2, borderBottom: '2px solid #000', pb: 1 }}>
-                        基本信息
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">位置</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{property.location}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">房型</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                {property.room_type_display || property.room_type}
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">面积</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{property.area}㎡</Typography>
-                        </Box>
-                        {property.floor && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">楼层</Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 500 }}>{property.floor}楼</Typography>
-                            </Box>
-                        )}
-                        {property.is_on_campus && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">位置类型</Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 500 }}>校园内</Typography>
-                            </Box>
-                        )}
+                {/* 基本信息 */}
+                <InfoSection
+                    title="基本信息"
+                    className="animate-fade-in-up delay-2"
+                >
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 3, md: 5 } }}>
+                        <InfoItem label="位置" value={property.location} />
+                        <InfoItem label="房型" value={property.room_type_display || property.room_type} />
+                        <InfoItem label="面积" value={`${property.area}㎡`} />
+                        {property.floor && <InfoItem label="楼层" value={`${property.floor}楼`} />}
+                        {property.is_on_campus && <InfoItem label="位置类型" value="校园内" />}
                     </Box>
-                </Paper>
+                </InfoSection>
 
-                {/* 第四行：配套设施 */}
-                <Paper sx={{ p: 4, boxShadow: 'none', border: '1px solid #E0E0E0' }}>
-                    <Typography variant="h6" sx={{ fontWeight: 500, mb: 2, borderBottom: '2px solid #000', pb: 1 }}>
-                        配套设施
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                        {FACILITIES.filter(f => property[f.key]).map((facility) => (
-                            <Box
-                                key={facility.key}
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                }}
-                            >
-                                <CheckCircle sx={{ mr: 1, fontSize: 18, color: '#000' }} />
-                                <Typography variant="body2">
+                {/* 配套设施 */}
+                {availableFacilities.length > 0 && (
+                    <InfoSection
+                        title="配套设施"
+                        className="animate-fade-in-up delay-3"
+                        noBorder
+                    >
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                            {availableFacilities.map((facility) => (
+                                <Box
+                                    key={facility.key}
+                                    sx={{
+                                        px: 2,
+                                        py: 1,
+                                        border: '1px solid #E0E0E0',
+                                        fontSize: '0.8125rem',
+                                        color: '#333',
+                                        letterSpacing: '0.02em',
+                                    }}
+                                >
                                     {facility.label}
-                                </Typography>
-                            </Box>
-                        ))}
-                    </Box>
-                </Paper>
+                                </Box>
+                            ))}
+                        </Box>
+                    </InfoSection>
+                )}
             </Container>
 
-            {/* 图片放大 Lightbox */}
+            {/* Lightbox */}
             <Dialog
                 open={lightboxOpen}
                 onClose={() => setLightboxOpen(false)}
                 maxWidth={false}
                 slotProps={{
                     paper: {
-                        sx: {
-                            backgroundColor: 'transparent',
-                            boxShadow: 'none',
-                            overflow: 'visible',
-                        }
+                        sx: { backgroundColor: 'transparent', boxShadow: 'none', overflow: 'visible' }
                     }
                 }}
                 sx={{
-                    '& .MuiBackdrop-root': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                    }
+                    '& .MuiBackdrop-root': { backgroundColor: 'rgba(0, 0, 0, 0.95)' }
                 }}
             >
                 <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {/* 关闭按钮 */}
                     <IconButton
                         onClick={() => setLightboxOpen(false)}
                         sx={{
@@ -392,84 +289,171 @@ function PropertyDetail() {
                             top: 20,
                             right: 20,
                             color: '#FFF',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
+                            '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
                         }}
                     >
                         <Close />
                     </IconButton>
 
-                    {/* 左切换按钮 */}
                     {hasMultipleImages && (
-                        <IconButton
-                            onClick={handlePrevImage}
-                            sx={{
-                                position: 'fixed',
-                                left: 20,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                color: '#FFF',
-                                backgroundColor: 'rgba(255,255,255,0.1)',
-                                width: 50,
-                                height: 50,
-                                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
-                            }}
-                        >
-                            <ChevronLeft fontSize="large" />
-                        </IconButton>
+                        <>
+                            <IconButton
+                                onClick={handlePrevImage}
+                                sx={{
+                                    position: 'fixed',
+                                    left: 20,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    color: '#FFF',
+                                    width: 48,
+                                    height: 48,
+                                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
+                                }}
+                            >
+                                <ChevronLeft fontSize="large" />
+                            </IconButton>
+                            <IconButton
+                                onClick={handleNextImage}
+                                sx={{
+                                    position: 'fixed',
+                                    right: 20,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    color: '#FFF',
+                                    width: 48,
+                                    height: 48,
+                                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
+                                }}
+                            >
+                                <ChevronRight fontSize="large" />
+                            </IconButton>
+                        </>
                     )}
 
-                    {/* 大图 */}
                     <img
                         src={images[currentImageIndex]?.image}
                         alt={property.title}
-                        style={{
-                            display: 'block',
-                            maxWidth: '80vw',
-                            maxHeight: '85vh',
-                            objectFit: 'contain',
-                        }}
+                        style={{ display: 'block', maxWidth: '85vw', maxHeight: '85vh', objectFit: 'contain' }}
                     />
 
-                    {/* 右切换按钮 */}
                     {hasMultipleImages && (
-                        <IconButton
-                            onClick={handleNextImage}
-                            sx={{
-                                position: 'fixed',
-                                right: 20,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                color: '#FFF',
-                                backgroundColor: 'rgba(255,255,255,0.1)',
-                                width: 50,
-                                height: 50,
-                                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
-                            }}
-                        >
-                            <ChevronRight fontSize="large" />
-                        </IconButton>
-                    )}
-
-                    {/* 图片计数 */}
-                    {hasMultipleImages && (
-                        <Typography
+                        <Box
                             sx={{
                                 position: 'fixed',
                                 bottom: 30,
                                 left: '50%',
                                 transform: 'translateX(-50%)',
                                 color: '#FFF',
-                                fontSize: '1rem',
+                                fontSize: '0.875rem',
+                                letterSpacing: '0.1em',
                             }}
                         >
                             {currentImageIndex + 1} / {images.length}
-                        </Typography>
+                        </Box>
                     )}
                 </Box>
             </Dialog>
         </Box>
     );
 }
+
+// 导航按钮组件
+const NavButton = ({ direction, onClick, children }) => (
+    <Box
+        component="button"
+        onClick={onClick}
+        sx={{
+            position: 'absolute',
+            [direction]: 12,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+            '&:hover': { backgroundColor: '#FFF' },
+        }}
+    >
+        {children}
+    </Box>
+);
+
+// 操作按钮组件
+const ActionButton = ({ children, primary, onClick }) => (
+    <Box
+        component="button"
+        onClick={onClick}
+        sx={{
+            width: '100%',
+            py: 1.5,
+            mb: primary ? 1.5 : 0,
+            fontSize: '0.9375rem',
+            fontWeight: 400,
+            letterSpacing: '0.1em',
+            fontFamily: 'inherit',
+            border: '1px solid #000',
+            backgroundColor: primary ? '#000' : 'transparent',
+            color: primary ? '#FFF' : '#000',
+            cursor: 'pointer',
+            transition: 'all 0.25s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            '&:hover': {
+                backgroundColor: primary ? '#333' : '#F5F5F5',
+            },
+        }}
+    >
+        {children}
+    </Box>
+);
+
+// 信息区块组件
+const InfoSection = ({ title, children, className, noBorder }) => (
+    <Box
+        className={className}
+        sx={{
+            p: { xs: 3, md: 4 },
+            border: '1px solid #E0E0E0',
+            borderBottom: noBorder ? '1px solid #E0E0E0' : 'none',
+            opacity: 0,
+            '&:last-child': { borderBottom: '1px solid #E0E0E0' },
+        }}
+    >
+        <Box
+            component="h3"
+            sx={{
+                fontSize: '0.9375rem',
+                fontWeight: 500,
+                letterSpacing: '0.1em',
+                color: '#000',
+                m: 0,
+                mb: 3,
+                pb: 2,
+                borderBottom: '2px solid #000',
+            }}
+        >
+            {title}
+        </Box>
+        {children}
+    </Box>
+);
+
+// 信息项组件
+const InfoItem = ({ label, value }) => (
+    <Box sx={{ minWidth: 100 }}>
+        <Box sx={{ fontSize: '0.8125rem', color: '#999', letterSpacing: '0.02em', mb: 0.5 }}>
+            {label}
+        </Box>
+        <Box sx={{ fontSize: '0.9375rem', fontWeight: 500, color: '#000' }}>
+            {value}
+        </Box>
+    </Box>
+);
 
 export default PropertyDetail;
