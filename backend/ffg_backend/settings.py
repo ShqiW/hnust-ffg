@@ -1,16 +1,19 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-your-secret-key-here"
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-your-secret-key-here")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # Application definition
 INSTALLED_APPS = [
@@ -27,6 +30,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # 静态文件服务
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -98,11 +102,25 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:3000,https://hnust-ffg.com,https://www.hnust-ffg.com"
+).split(",")
 CORS_ALLOW_CREDENTIALS = True
+
+# 静态文件压缩
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # REST Framework settings
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
 }
+
+# 阿里云短信配置
+ADMIN_PHONE = "19967268966"  # 接收通知的管理员手机号
+ALIYUN_ACCESS_KEY_ID = ""  # 阿里云 AccessKey ID
+ALIYUN_ACCESS_KEY_SECRET = ""  # 阿里云 AccessKey Secret
+ALIYUN_SMS_SIGN_NAME = ""  # 短信签名名称
+ALIYUN_SMS_TEMPLATE_CODE = ""  # 短信模板CODE
+
