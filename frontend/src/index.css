@@ -1,145 +1,171 @@
 @import './styles/variables.css';
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ========================================
+   全局重置与基础样式
+   ======================================== */
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
-  font-family: 'FeiHuaSongTi', serif !important;
-  background-color: var(--background);
-  color: var(--text-primary);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-family: 'FeiHuaSongTi', 'Noto Serif SC', 'Source Han Serif CN', serif;
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
+/* ========================================
+   入场动画
+   ======================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-fade-in-scale {
+    animation: fadeInScale var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* 延迟动画类 */
+.delay-1 { animation-delay: 100ms; }
+.delay-2 { animation-delay: 200ms; }
+.delay-3 { animation-delay: 300ms; }
+.delay-4 { animation-delay: 400ms; }
+.delay-5 { animation-delay: 500ms; }
+
+/* ========================================
+   链接样式
+   ======================================== */
+
 a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: color var(--transition-normal);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out);
 }
 
 a:hover {
-  color: var(--primary-light);
+    color: var(--color-text-secondary);
 }
+
+/* ========================================
+   图片
+   ======================================== */
 
 img {
-  max-width: 100%;
-  height: auto;
-  display: block;
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
 
-/* Utility Classes */
-.text-center {
-  text-align: center;
+/* ========================================
+   选择文本
+   ======================================== */
+
+::selection {
+    background-color: var(--color-black);
+    color: var(--color-white);
 }
 
-.text-left {
-  text-align: left;
+/* ========================================
+   滚动条（可选：极简风格）
+   ======================================== */
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
 
-.text-right {
-  text-align: right;
+::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
 }
 
-.flex {
-  display: flex;
+::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 3px;
 }
 
-.flex-col {
-  flex-direction: column;
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-600);
 }
 
-.items-center {
-  align-items: center;
+/* ========================================
+   Focus 样式
+   ======================================== */
+
+:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
 }
 
-.justify-center {
-  justify-content: center;
+/* ========================================
+   MUI 覆盖样式
+   ======================================== */
+
+/* 统一所有 MUI 组件使用宋体 */
+.MuiTypography-root {
+    font-family: inherit !important;
 }
 
-.justify-between {
-  justify-content: space-between;
+.MuiButton-root {
+    font-family: inherit !important;
+    text-transform: none !important;
 }
 
-.gap-1 {
-  gap: var(--spacing-1);
+.MuiTab-root {
+    font-family: inherit !important;
+    text-transform: none !important;
 }
 
-.gap-2 {
-  gap: var(--spacing-2);
+.MuiTableCell-root {
+    font-family: inherit !important;
 }
 
-.gap-3 {
-  gap: var(--spacing-3);
-}
-
-.gap-4 {
-  gap: var(--spacing-4);
-}
-
-.w-full {
-  width: 100%;
-}
-
-.h-full {
-  height: 100%;
-}
-
-.relative {
-  position: relative;
-}
-
-.absolute {
-  position: absolute;
-}
-
-.sticky {
-  position: sticky;
-}
-
-.fixed {
-  position: fixed;
-}
-
-.top-0 {
-  top: 0;
-}
-
-.right-0 {
-  right: 0;
-}
-
-.bottom-0 {
-  bottom: 0;
-}
-
-.left-0 {
-  left: 0;
-}
-
-.z-0 {
-  z-index: 0;
-}
-
-.z-10 {
-  z-index: 10;
-}
-
-.z-20 {
-  z-index: 20;
-}
-
-.z-30 {
-  z-index: 30;
-}
-
-.z-40 {
-  z-index: 40;
-}
-
-.z-50 {
-  z-index: 50;
+.MuiInputBase-root {
+    font-family: inherit !important;
 }
